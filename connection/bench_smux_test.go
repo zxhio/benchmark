@@ -14,29 +14,43 @@ func (s *SmuxSession) Accept() (net.Conn, error) { return s.Session.AcceptStream
 func (s *SmuxSession) Close() error              { return s.Session.Close() }
 
 func BenchmarkConnSmux(b *testing.B) {
-	cs, ss, err := getSmuxStreamPair()
-	if err != nil {
-		b.Fatal(err)
-	}
-	defer cs.Close()
-	defer ss.Close()
-	bench(b, cs, ss)
+	b.Run("OverTCP", func(b *testing.B) {
+		cs, ss, err := getTCPSmuxStreamPair()
+		if err != nil {
+			b.Fatal(err)
+		}
+		defer cs.Close()
+		defer ss.Close()
+		bench(b, cs, ss)
+	})
+
+	b.Run("OverTLS", func(b *testing.B) {
+		cs, ss, err := getTLSSmuxStreamPair()
+		if err != nil {
+			b.Fatal(err)
+		}
+		defer cs.Close()
+		defer ss.Close()
+		bench(b, cs, ss)
+	})
 }
 
-func BenchmarkEchoSmuxTCP(b *testing.B) {
-	cs, ss, err := getTCPConnPair()
-	if err != nil {
-		b.Fatal(err)
-	}
-	benchEchoSmux(b, cs, ss)
-}
+func BenchmarkEchoSmux(b *testing.B) {
+	b.Run("OverTCP", func(b *testing.B) {
+		cs, ss, err := getTCPConnPair()
+		if err != nil {
+			b.Fatal(err)
+		}
+		benchEchoSmux(b, cs, ss)
+	})
 
-func BenchmarkEchoSmuxTLS(b *testing.B) {
-	conn0, conn1, err := getTLSConnPair()
-	if err != nil {
-		b.Fatal(err)
-	}
-	benchEchoSmux(b, conn0, conn1)
+	b.Run("OverTLS", func(b *testing.B) {
+		conn0, conn1, err := getTLSConnPair()
+		if err != nil {
+			b.Fatal(err)
+		}
+		benchEchoSmux(b, conn0, conn1)
+	})
 }
 
 func benchEchoSmux(b *testing.B, conn0, conn1 net.Conn) {
@@ -51,12 +65,23 @@ func benchEchoSmux(b *testing.B, conn0, conn1 net.Conn) {
 }
 
 // Code from https://github.com/xtaci/smux/blob/master/session_test.go#L1005
-func getSmuxStreamPair() (*smux.Stream, *smux.Stream, error) {
+func getTCPSmuxStreamPair() (*smux.Stream, *smux.Stream, error) {
 	c1, c2, err := getTCPConnPair()
 	if err != nil {
 		return nil, nil, err
 	}
+	return getSmuxStreamPair(c1, c2)
+}
 
+func getTLSSmuxStreamPair() (*smux.Stream, *smux.Stream, error) {
+	c1, c2, err := getTLSConnPair()
+	if err != nil {
+		return nil, nil, err
+	}
+	return getSmuxStreamPair(c1, c2)
+}
+
+func getSmuxStreamPair(c1, c2 net.Conn) (*smux.Stream, *smux.Stream, error) {
 	s, err := smux.Server(c2, nil)
 	if err != nil {
 		return nil, nil, err

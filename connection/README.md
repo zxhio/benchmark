@@ -9,25 +9,28 @@ goarch: amd64
 pkg: benchmark/connection
 cpu: 12th Gen Intel(R) Core(TM) i7-12700
 BenchmarkConnCmux
-BenchmarkConnCmux/magic
-BenchmarkConnCmux/magic-20                917902             12348 ns/op        10614.63 MB/s          0 B/op          0 allocs/op
-BenchmarkConnCmux/token
-BenchmarkConnCmux/token-20                942536             12300 ns/op        10656.67 MB/s          0 B/op          0 allocs/op
-BenchmarkConnCmux/tls
-BenchmarkConnCmux/tls/bare
-BenchmarkConnCmux/tls/bare-20             291968             40402 ns/op        3244.23 MB/s         191 B/op          7 allocs/op
-BenchmarkConnCmux/tls/magic
-BenchmarkConnCmux/tls/magic-20            298700             40465 ns/op        3239.15 MB/s         191 B/op          7 allocs/op
-BenchmarkConnCmux/any
-BenchmarkConnCmux/any-20                 1000000             12418 ns/op        10554.98 MB/s          0 B/op          0 allocs/op
+BenchmarkConnCmux/MagicMatcher
+BenchmarkConnCmux/MagicMatcher-20                     997550             11862 ns/op        11049.73 MB/s          0 B/op          0 allocs/op
+BenchmarkConnCmux/TokenMatcher
+BenchmarkConnCmux/TokenMatcher-20                     958461             11714 ns/op        11188.94 MB/s          0 B/op          0 allocs/op
+BenchmarkConnCmux/TLSMatcher
+BenchmarkConnCmux/TLSMatcher/TLS
+BenchmarkConnCmux/TLSMatcher/TLS-20                   295111             40471 ns/op        3238.68 MB/s         192 B/op          7 allocs/op
+BenchmarkConnCmux/TLSMatcher/MagicMatcher
+BenchmarkConnCmux/TLSMatcher/MagicMatcher-20          296203             39566 ns/op        3312.75 MB/s         192 B/op          7 allocs/op
+BenchmarkConnCmux/AnyMatcher
+BenchmarkConnCmux/AnyMatcher-20                       932871             11870 ns/op        11041.90 MB/s          0 B/op          0 allocs/op
 BenchmarkConnSmux
-BenchmarkConnSmux-20                      473323             24873 ns/op        5269.67 MB/s        1396 B/op         26 allocs/op
+BenchmarkConnSmux/OverTCP
+BenchmarkConnSmux/OverTCP-20                          438889             24703 ns/op        5305.97 MB/s        1380 B/op         26 allocs/op
+BenchmarkConnSmux/OverTLS
+BenchmarkConnSmux/OverTLS-20                          210336             57345 ns/op        2285.69 MB/s        1596 B/op         36 allocs/op
 BenchmarkConnTCP
-BenchmarkConnTCP-20                       926667             11862 ns/op        11049.71 MB/s          0 B/op          0 allocs/op
+BenchmarkConnTCP-20                                   917894             12120 ns/op        10814.60 MB/s          0 B/op          0 allocs/op
 BenchmarkConnTLS
-BenchmarkConnTLS-20                       291843             40619 ns/op        3226.87 MB/s         192 B/op          7 allocs/op
+BenchmarkConnTLS-20                                   292843             40310 ns/op        3251.57 MB/s         192 B/op          7 allocs/op
 PASS
-ok      benchmark/connection    95.894s
+ok      benchmark/connection    106.287s
 ```
 
 Benchmark for echo.
@@ -39,19 +42,20 @@ goarch: amd64
 pkg: benchmark/connection
 cpu: 12th Gen Intel(R) Core(TM) i7-12700
 BenchmarkEchoCmux
-BenchmarkEchoCmux-20               79078            167912 ns/op         780.60 MB/s       34006 B/op         26 allocs/op
+BenchmarkEchoCmux-20                       83162            164356 ns/op         797.49 MB/s       34005 B/op         26 allocs/op
 BenchmarkEchoFastHTTP
-BenchmarkEchoFastHTTP-20          111536             98882 ns/op        1325.54 MB/s       12810 B/op         41 allocs/op
+BenchmarkEchoFastHTTP-20                  144302             95231 ns/op        1376.36 MB/s       12941 B/op         41 allocs/op
 BenchmarkEchoNetHTTP
-BenchmarkEchoNetHTTP-20            44312            248886 ns/op         526.63 MB/s      340752 B/op         58 allocs/op
-BenchmarkEchoSmuxTCP
-BenchmarkEchoSmuxTCP-20           159150             69924 ns/op        1874.50 MB/s       79812 B/op         85 allocs/op
-BenchmarkEchoSmuxTLS
-BenchmarkEchoSmuxTLS-20           103567            113524 ns/op        1154.57 MB/s       80941 B/op        102 allocs/op
+BenchmarkEchoNetHTTP-20                    65124            239187 ns/op         547.99 MB/s      370816 B/op         59 allocs/op
+BenchmarkEchoSmux
+BenchmarkEchoSmux/OverTCP
+BenchmarkEchoSmux/OverTCP-20              153706             70494 ns/op        1859.34 MB/s       79824 B/op         85 allocs/op
+BenchmarkEchoSmux/OverTLS
+BenchmarkEchoSmux/OverTLS-20              106585            112120 ns/op        1169.04 MB/s       81776 B/op        102 allocs/op
 BenchmarkEchoTCP
-BenchmarkEchoTCP-20               304132             40183 ns/op        3261.86 MB/s        1079 B/op         23 allocs/op
+BenchmarkEchoTCP-20                       308125             39266 ns/op        3338.05 MB/s        1078 B/op         23 allocs/op
 BenchmarkEchoTLS
-BenchmarkEchoTLS-20                10000           2021083 ns/op          64.85 MB/s      242498 B/op       1112 allocs/op
+BenchmarkEchoTLS-20                        10000           1988704 ns/op          65.91 MB/s      241188 B/op       1112 allocs/op
 PASS
-ok      benchmark/connection    108.726s
+ok      benchmark/connection    112.673s
 ```

@@ -64,7 +64,7 @@ func BenchmarkConnCmux(b *testing.B) {
 	anyLis := tcpMux.Match(cmux.Any())
 	go tcpMux.Serve()
 
-	b.Run("magic", func(b *testing.B) {
+	b.Run("MagicMatcher", func(b *testing.B) {
 		buf := make([]byte, 4)
 		binary.BigEndian.PutUint32(buf, PacketMagic)
 
@@ -81,11 +81,11 @@ func BenchmarkConnCmux(b *testing.B) {
 		defer conn0.Close()
 		defer conn1.Close()
 
-		io.ReadAtLeast(conn0, buf, len(buf))
+		io.CopyN(io.Discard, conn0, int64(len(buf)))
 		bench(b, conn0, conn1)
 	})
 
-	b.Run("token", func(b *testing.B) {
+	b.Run("TokenMatcher", func(b *testing.B) {
 		conn0, conn1, err := getConnPair(
 			func() (net.Listener, error) { return tokenLis, nil },
 			func(s string) (net.Conn, error) {
@@ -99,13 +99,12 @@ func BenchmarkConnCmux(b *testing.B) {
 		defer conn0.Close()
 		defer conn1.Close()
 
-		buf := make([]byte, len(PacketToken))
-		io.ReadAtLeast(conn0, buf, len(buf))
+		io.CopyN(io.Discard, conn0, int64(len(PacketToken)))
 		bench(b, conn0, conn1)
 	})
 
-	b.Run("tls", func(b *testing.B) {
-		b.Run("bare", func(b *testing.B) {
+	b.Run("TLSMatcher", func(b *testing.B) {
+		b.Run("TLS", func(b *testing.B) {
 			conn0, conn1, err := getConnPair(
 				func() (net.Listener, error) { return wrapTLSListener(tlsLis) },
 				func(s string) (net.Conn, error) { return tls.Dial("tcp", s, &tls.Config{InsecureSkipVerify: true}) },
@@ -128,7 +127,7 @@ func BenchmarkConnCmux(b *testing.B) {
 		tlsMagicLis := tlsMux.Match(PacketMagicMatcher)
 		go tlsMux.Serve()
 
-		b.Run("magic", func(b *testing.B) {
+		b.Run("MagicMatcher", func(b *testing.B) {
 			buf := make([]byte, 4)
 			binary.BigEndian.PutUint32(buf, PacketMagic)
 
@@ -145,13 +144,13 @@ func BenchmarkConnCmux(b *testing.B) {
 			defer conn0.Close()
 			defer conn1.Close()
 
-			io.ReadAtLeast(conn0, buf, len(buf))
+			io.CopyN(io.Discard, conn0, int64(len(buf)))
 			bench(b, conn0, conn1)
 		})
 
 	})
 
-	b.Run("any", func(b *testing.B) {
+	b.Run("AnyMatcher", func(b *testing.B) {
 		buf := []byte("use_max_len_test_data")
 		conn0, conn1, err := getConnPair(
 			func() (net.Listener, error) { return anyLis, nil },
@@ -166,7 +165,7 @@ func BenchmarkConnCmux(b *testing.B) {
 		defer conn0.Close()
 		defer conn1.Close()
 
-		io.ReadAtLeast(conn0, buf, len(buf))
+		io.CopyN(io.Discard, conn0, int64(len(buf)))
 		bench(b, conn0, conn1)
 	})
 }
