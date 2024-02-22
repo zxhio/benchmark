@@ -50,6 +50,7 @@ func benchEchoSmux(b *testing.B, conn0, conn1 net.Conn) {
 	benchEcho(b, func(s string) (net.Conn, error) { return cs.OpenStream() }, "")
 }
 
+// Code from https://github.com/xtaci/smux/blob/master/session_test.go#L1005
 func getSmuxStreamPair() (*smux.Stream, *smux.Stream, error) {
 	c1, c2, err := getTCPConnPair()
 	if err != nil {
