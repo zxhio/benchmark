@@ -48,15 +48,15 @@ func acquirePacketBuf(n int) ([]byte, func()) {
 		buf   []byte
 		putfn func()
 	)
-	if n < CapturePacketMetaLen+128 {
+	if n <= CapturePacketMetaLen+128 {
 		smallBuf := smallBufPool.Get().(*[CapturePacketMetaLen + 128]byte)
 		buf = smallBuf[:0]
 		putfn = func() { smallBufPool.Put(smallBuf) }
-	} else if n < CapturePacketMetaLen+1024 {
+	} else if n <= CapturePacketMetaLen+1024 {
 		midBuf := midBufPool.Get().(*[CapturePacketMetaLen + 1024]byte)
 		buf = midBuf[:0]
 		putfn = func() { midBufPool.Put(midBuf) }
-	} else if n < CapturePacketMetaLen+8192 {
+	} else if n <= CapturePacketMetaLen+8192 {
 		largeBuf := largeBufPool.Get().(*[CapturePacketMetaLen + 8192]byte)
 		buf = largeBuf[:0]
 		putfn = func() { largeBufPool.Put(largeBuf) }
@@ -114,6 +114,18 @@ func (bp binaryPack) Decode(data []byte, p *CapturePacket) error {
 	p.Data = make([]byte, len(data)-CapturePacketMetaLen)
 	copy(p.Data, data[CapturePacketMetaLen:])
 	return nil
+}
+
+func (bp binaryPack) DecodeWithPool(data []byte, p *CapturePacket) (func(), error) {
+	err := bp.DecodeMeta(data, p)
+	if err != nil {
+		return nil, err
+	}
+
+	b, putfn := acquirePacketBuf(len(data[CapturePacketMetaLen:]))
+	p.Data = b[:len(data[CapturePacketMetaLen:])]
+	copy(p.Data, data[CapturePacketMetaLen:])
+	return putfn, nil
 }
 
 func (binaryPack) DecodeMeta(data []byte, p *CapturePacket) error {

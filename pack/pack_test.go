@@ -67,7 +67,6 @@ func TestBinaryPack(t *testing.T) {
 	data := BinaryPack.Encode(&smallPacket)
 	assert.Equal(t, len(rawDataSmall)+CapturePacketMetaLen, len(data), "encode failed")
 	assert.Equal(t, data[CapturePacketMetaLen:], rawDataSmall, "invalid raw data")
-	t.Logf("binary pack data length=%d\n", len(data))
 
 	var pd CapturePacket
 	BinaryPack.Decode(data, &pd)
@@ -85,6 +84,16 @@ func TestBinaryPack(t *testing.T) {
 	assert.Equal(t, pd.CaptureInfo, smallPacket.CaptureInfo, "invalid capture info")
 	assert.Equal(t, pd.Id, smallPacket.Id, "invalid id")
 	assert.Equal(t, pd.Data, smallPacket.Data, "invalid data")
+
+	BinaryPack.DecodeWithPool(data, &pd)
+	assert.Equal(t, pd.CaptureInfo, smallPacket.CaptureInfo, "invalid capture info")
+	assert.Equal(t, pd.Id, smallPacket.Id, "invalid id")
+	assert.Equal(t, pd.Data, smallPacket.Data, "invalid data")
+
+	for _, p := range packets {
+		data = BinaryPack.Encode(&p)
+		t.Logf("Binary pack raw_data_len=%d, encoded_data_len=%d\n", len(p.Data), len(data))
+	}
 }
 
 func BenchmarkBinaryPack(b *testing.B) {
@@ -132,12 +141,26 @@ func BenchmarkBinaryPack(b *testing.B) {
 	}
 
 	for _, p := range packets {
-		b.ResetTimer()
-		data := BinaryPack.Encode(&p)
-		var p CapturePacket
-		for i := 0; i < b.N; i++ {
-			BinaryPack.Decode(data, &p)
-		}
+		b.Run("decode#"+strconv.Itoa(len(p.Data)), func(b *testing.B) {
+			b.ResetTimer()
+			data := BinaryPack.Encode(&p)
+			var p CapturePacket
+			for i := 0; i < b.N; i++ {
+				BinaryPack.Decode(data, &p)
+			}
+		})
+	}
+
+	for _, p := range packets {
+		b.Run("decode_with_pool#"+strconv.Itoa(len(p.Data)), func(b *testing.B) {
+			b.ResetTimer()
+			data := BinaryPack.Encode(&p)
+			var p CapturePacket
+			for i := 0; i < b.N; i++ {
+				fn, _ := BinaryPack.DecodeWithPool(data, &p)
+				fn()
+			}
+		})
 	}
 }
 
@@ -146,12 +169,16 @@ func TestMsgPack(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("msgpack data length=%d\n", len(data))
 
 	var p CapturePacket
 	err = msgpack.Unmarshal(data, &p)
 	if err != nil {
 		t.Fatal(err)
+	}
+
+	for _, p := range packets {
+		data, _ = msgpack.Marshal(&p)
+		t.Logf("msgpack raw_data_len=%d, encoded_data_len=%d\n", len(p.Data), len(data))
 	}
 }
 
@@ -194,11 +221,15 @@ func BenchmarkMsgPack(b *testing.B) {
 }
 
 func TestJsonPack(t *testing.T) {
-	data, err := json.Marshal(smallPacket)
+	_, err := json.Marshal(smallPacket)
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("json pack data length=%d\n", len(data))
+
+	for _, p := range packets {
+		data, _ := json.Marshal(&p)
+		t.Logf("json pack raw_data_len=%d, encoded_data_len=%d\n", len(p.Data), len(data))
+	}
 }
 
 func BenchmarkJsonPack(b *testing.B) {
@@ -245,13 +276,17 @@ func TestJsonCompressPack(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("json compress pack data length=%d\n", len(data))
 
 	var pd CapturePacket
 	JsonCompressPack{}.Decode(data, &pd)
 	assert.Equal(t, pd.CaptureInfo, smallPacket.CaptureInfo, "invalid capture info")
 	assert.Equal(t, pd.Id, smallPacket.Id, "invalid id")
 	assert.Equal(t, pd.Data, smallPacket.Data, "invalid data")
+
+	for _, p := range packets {
+		data, _ := JsonCompressPack{}.Encode(&p)
+		t.Logf("json compress pack raw_data_len=%d, encoded_data_len=%d\n", len(p.Data), len(data))
+	}
 }
 
 func BenchmarkJsonCompressPack(b *testing.B) {

@@ -20,6 +20,9 @@ BenchmarkBinaryPack/encode_to#16384-20           100000000             113.4 ns/
 BenchmarkBinaryPack/decode_meta#72-20           1000000000             2.890 ns/op               0 B/op          0 allocs/op
 BenchmarkBinaryPack/decode_meta#1024-20         1000000000             2.886 ns/op               0 B/op          0 allocs/op
 BenchmarkBinaryPack/decode_meta#16384-20        1000000000             2.878 ns/op               0 B/op          0 allocs/op
+BenchmarkBinaryPack/decode_with_pool#72-20       106808395             31.51 ns/op              16 B/op          1 allocs/op
+BenchmarkBinaryPack/decode_with_pool#1024-20     100319094             35.94 ns/op              16 B/op          1 allocs/op
+BenchmarkBinaryPack/decode_with_pool#16384-20     26447718             138.6 ns/op              16 B/op          1 allocs/op
 
 BenchmarkMsgPack/encode#72-20                     10466427              1199 ns/op             688 B/op          8 allocs/op
 BenchmarkMsgPack/encode#1024-20                    6599528              2132 ns/op            1585 B/op          8 allocs/op
