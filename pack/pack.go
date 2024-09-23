@@ -35,8 +35,37 @@ const (
 )
 
 // Reduce packet meta memory allocation.
-var metaBufPool = sync.Pool{
-	New: func() interface{} { return new([CapturePacketMetaLen]byte) },
+var (
+	metaBufPool   = sync.Pool{New: func() interface{} { return new([CapturePacketMetaLen]byte) }}
+	smallBufPool  = sync.Pool{New: func() interface{} { return new([CapturePacketMetaLen + 128]byte) }}
+	midBufPool    = sync.Pool{New: func() interface{} { return new([CapturePacketMetaLen + 1024]byte) }}
+	largeBufPool  = sync.Pool{New: func() interface{} { return new([CapturePacketMetaLen + 8192]byte) }}
+	xlargeBufPool = sync.Pool{New: func() interface{} { return new([CapturePacketMetaLen + 65536]byte) }}
+)
+
+func acquirePacketBuf(n int) ([]byte, func()) {
+	var (
+		buf   []byte
+		putfn func()
+	)
+	if n < CapturePacketMetaLen+128 {
+		smallBuf := smallBufPool.Get().(*[CapturePacketMetaLen + 128]byte)
+		buf = smallBuf[:0]
+		putfn = func() { smallBufPool.Put(smallBuf) }
+	} else if n < CapturePacketMetaLen+1024 {
+		midBuf := midBufPool.Get().(*[CapturePacketMetaLen + 1024]byte)
+		buf = midBuf[:0]
+		putfn = func() { midBufPool.Put(midBuf) }
+	} else if n < CapturePacketMetaLen+8192 {
+		largeBuf := largeBufPool.Get().(*[CapturePacketMetaLen + 8192]byte)
+		buf = largeBuf[:0]
+		putfn = func() { largeBufPool.Put(largeBuf) }
+	} else {
+		xlargeBuf := xlargeBufPool.Get().(*[CapturePacketMetaLen + 65536]byte)
+		buf = xlargeBuf[:0]
+		putfn = func() { xlargeBufPool.Put(xlargeBuf) }
+	}
+	return buf, putfn
 }
 
 // Assuming these int values does not exceed 65535，the size can be reduced by a few bytes.
@@ -50,6 +79,13 @@ func (bp binaryPack) Encode(p *CapturePacket) []byte {
 	return buf.Bytes()
 }
 
+func (bp binaryPack) EncodeWithPool(p *CapturePacket) ([]byte, func()) {
+	b, putfn := acquirePacketBuf(CapturePacketMetaLen + len(p.Data))
+	buf := bytes.NewBuffer(b)
+	bp.EncodeTo(p, buf)
+	return buf.Bytes(), putfn
+}
+
 // Write encoded data directly without allocating memory.
 // So at the calling point, this writer can be reused.
 func (binaryPack) EncodeTo(p *CapturePacket, w io.Writer) (int, error) {
@@ -58,7 +94,7 @@ func (binaryPack) EncodeTo(p *CapturePacket, w io.Writer) (int, error) {
 
 	binary.BigEndian.PutUint64(buf[0:], uint64(p.Timestamp.UnixMicro()))
 	binary.BigEndian.PutUint16(buf[8:], uint16(p.CaptureLength))
-	binary.BigEndian.PutUint16(buf[12:], uint16(p.Length))
+	binary.BigEndian.PutUint16(buf[12:], uint16(p.Length)) // if _CaptureLength_ not exceed 65535, use [10:]
 	binary.BigEndian.PutUint16(buf[16:], uint16(p.InterfaceIndex))
 	binary.BigEndian.PutUint16(buf[18:], uint16(p.Id))
 

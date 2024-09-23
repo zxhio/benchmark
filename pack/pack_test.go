@@ -74,6 +74,17 @@ func TestBinaryPack(t *testing.T) {
 	assert.Equal(t, pd.CaptureInfo, smallPacket.CaptureInfo, "invalid capture info")
 	assert.Equal(t, pd.Id, smallPacket.Id, "invalid id")
 	assert.Equal(t, pd.Data, smallPacket.Data, "invalid data")
+
+	data, putfn := BinaryPack.EncodeWithPool(&smallPacket)
+	defer putfn()
+	assert.Equal(t, len(rawDataSmall)+CapturePacketMetaLen, len(data), "encode failed")
+	assert.Equal(t, data[CapturePacketMetaLen:], rawDataSmall, "invalid raw data")
+	t.Logf("binary pack data length=%d\n", len(data))
+
+	BinaryPack.Decode(data, &pd)
+	assert.Equal(t, pd.CaptureInfo, smallPacket.CaptureInfo, "invalid capture info")
+	assert.Equal(t, pd.Id, smallPacket.Id, "invalid id")
+	assert.Equal(t, pd.Data, smallPacket.Data, "invalid data")
 }
 
 func BenchmarkBinaryPack(b *testing.B) {
@@ -84,6 +95,16 @@ func BenchmarkBinaryPack(b *testing.B) {
 			b.ResetTimer()
 			for i := 0; i < b.N; i++ {
 				BinaryPack.Encode(&p)
+			}
+		})
+	}
+
+	for _, p := range packets {
+		b.Run("encode_with_pool#"+strconv.Itoa(len(p.Data)), func(b *testing.B) {
+			b.ResetTimer()
+			for i := 0; i < b.N; i++ {
+				_, fn := BinaryPack.EncodeWithPool(&p)
+				fn()
 			}
 		})
 	}

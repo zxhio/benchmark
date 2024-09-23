@@ -11,6 +11,9 @@ cpu: 12th Gen Intel(R) Core(TM) i7-12700
 BenchmarkBinaryPack/encode#72-20                  72744334             187.1 ns/op             144 B/op          2 allocs/op
 BenchmarkBinaryPack/encode#1024-20                17048832             660.6 ns/op            1200 B/op          2 allocs/op
 BenchmarkBinaryPack/encode#16384-20                2085050              6280 ns/op           18495 B/op          2 allocs/op
+BenchmarkBinaryPack/encode_with_pool#72-20        34700313             109.2 ns/op              64 B/op          2 allocs/op
+BenchmarkBinaryPack/encode_with_pool#1024-20      39370662             101.1 ns/op              64 B/op          2 allocs/op
+BenchmarkBinaryPack/encode_with_pool#16384-20     18445262             177.2 ns/op              64 B/op          2 allocs/op
 BenchmarkBinaryPack/encode_to#72-20              705428736             16.96 ns/op               0 B/op          0 allocs/op
 BenchmarkBinaryPack/encode_to#1024-20            575312358             20.78 ns/op               0 B/op          0 allocs/op
 BenchmarkBinaryPack/encode_to#16384-20           100000000             113.4 ns/op               0 B/op          0 allocs/op
